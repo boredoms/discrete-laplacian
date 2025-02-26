@@ -30,6 +30,7 @@
 *.exe
 *.out
 *.app
+test
 
 # clangd cache
 .cache
