@@ -15,6 +15,17 @@ template <typename IntType = int> class DiscreteLaplacian {
   //
   // TODO: writing out and in
 
+  template <std::uniform_random_bit_generator URNG>
+  IntType fast_geometric_distribution(URNG &urng, const double p) {
+    double u = 0.0;
+
+    while (u == 0.0) {
+      u = std::generate_canonical<double>(urng);
+    }
+
+    return static_cast<IntType>(std::ceil(std::log(u) / std::log(1 - p)));
+  }
+
 public:
   using result_type = IntType;
   using result_float_type = double;
