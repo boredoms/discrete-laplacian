@@ -1,14 +1,13 @@
 #include <algorithm>
 #include <catch2/catch_all.hpp>
 #include <cmath>
+#include <cstdio>
 #include <functional>
 #include <numeric>
 #include <random>
 #include <vector>
 
 #include "discrete_laplacian_distribution.hpp"
-
-// TODO: benchmark the function
 
 // helper function to generate num_samples samples from the DiscreteLaplacian
 std::vector<int> generate_samples(DiscreteLaplacian<int> &dld,
@@ -217,6 +216,8 @@ TEST_CASE("Empirical distribution matches expected distribution",
                            [&](int x) { return x < -margin; });
 
   auto ks = compute_ks_statistic(dld, counts, num_samples, margin, seen);
+
+  printf("Kolmogorov-Smirnov: %f", ks);
 
   // the numbers are from Knuth's AOCP Vol 2, and they should have the test
   // fail no more than 2% of the time
