@@ -10,20 +10,24 @@ template <typename IntType = int> class DiscreteLaplacian {
                     std::is_signed<IntType>::value,
                 "template type must be a signed integral type");
 
-  // TODO: profile and see if own geometric distribution based on truncation of
-  // exponential distribution is faster
-  //
   // TODO: writing out and in
 
+  // this function produces a geometrically distributed variable more quickly
+  // than the standard library function, since it does not use an iterative
+  // approach and continuous coin flips, but rather a single sample from the
+  // uniform distribution. once p becomes large, this provides significant
+  // speedups. See Knuth's AOCP Vol. 2 Section 3.4.1 Algorithm F
   template <std::uniform_random_bit_generator URNG>
   IntType fast_geometric_distribution(URNG &urng, const double p) {
+    std::exponential_distribution<> ed(1);
+
     double u = 0.0;
 
     while (u == 0.0) {
       u = std::generate_canonical<double, 53>(urng);
     }
 
-    return static_cast<IntType>(std::ceil(std::log(u) / std::log(1 - p)));
+    return static_cast<IntType>(std::ceil(-u / std::log(1 - p)));
   }
 
 public:
