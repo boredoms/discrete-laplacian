@@ -27,7 +27,7 @@ template <typename IntType = int> class DiscreteLaplacian {
       u = std::generate_canonical<double, 53>(urng);
     }
 
-    return static_cast<IntType>(std::ceil(-u / std::log(1 - p)));
+    return static_cast<IntType>(std::ceil(std::log(u) / std::log(1 - p)));
   }
 
 public:
