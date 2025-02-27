@@ -6,7 +6,7 @@
 #include <random>
 #include <vector>
 
-#include "dld.hpp"
+#include "discrete_laplacian_distribution.hpp"
 
 // TODO: benchmark the function
 
