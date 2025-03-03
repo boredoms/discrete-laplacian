@@ -21,7 +21,6 @@ std::vector<int> generate_samples(Distribution &d, std::minstd_rand &gen,
 
 template <typename Distribution>
 auto generate_testing_data(Distribution &d, int num_samples) {
-std:;
   std::random_device rd;
   std::minstd_rand gen(rd());
 

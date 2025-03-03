@@ -4,9 +4,11 @@
 namespace Canonne {
 // NOTE: this code is provided for completeness, i do not recommend using it as
 // it performs worse in terms of running time than the other algorithms for no
-// apparent payoff.
+// apparent payoff. The code is kept as close to the pseudocode given in the
+// paper as possible.
 
 // Algorithm 1 from the Canonne paper to sample from Bernoulli(exp(-gamma))
+// It has expected running time of O(1).
 template <std::uniform_random_bit_generator URNG>
 bool bernoulli_exp(URNG &urng, double gamma) {
   assert(gamma >= 0.0 && "Gamma must be non-negative");

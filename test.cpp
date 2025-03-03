@@ -91,7 +91,6 @@ TEST_CASE("Empirical distribution matches expected distribution",
   // standard distributions
   int stddev = std::ceil(std::sqrt(dld.var()));
   int margin = 8 * stddev;
-  int num_buckets = 2 * margin + 1;
 
   auto counts = compute_counts(buffer, margin);
   int seen = std::count_if(buffer.begin(), buffer.end(),
