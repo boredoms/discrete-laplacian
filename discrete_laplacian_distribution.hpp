@@ -1,3 +1,6 @@
+#ifndef _DISCRETE_LAPLACIAN_H_
+#define _DISCRETE_LAPLACIAN_H_
+
 #include <cassert>
 #include <cmath>
 #include <cstdlib>
@@ -124,3 +127,5 @@ public:
 private:
   param_type _M_param;
 };
+
+#endif // !DEBUG
