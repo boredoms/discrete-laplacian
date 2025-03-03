@@ -1,8 +1,10 @@
 #include <cassert>
 #include <random>
 
+namespace Canonne {
 // NOTE: this code is provided for completeness, i do not recommend using it as
-// it performs worse than the other algorithms for no apparent payoff.
+// it performs worse in terms of running time than the other algorithms for no
+// apparent payoff.
 
 // Algorithm 1 from the Canonne paper to sample from Bernoulli(exp(-gamma))
 template <std::uniform_random_bit_generator URNG>
@@ -42,6 +44,8 @@ bool bernoulli_exp(URNG &urng, double gamma) {
 // algorithm 2 in the Canonne paper.
 template <std::uniform_random_bit_generator URNG>
 int discrete_laplace(URNG &urng, int s, int t) {
+  assert(s > 0 && t > 0 && "Parameters must be positive.");
+
   std::uniform_int_distribution<int> ud(0, t - 1);
 
   while (true) {
@@ -76,3 +80,5 @@ int discrete_laplace(URNG &urng, int s, int t) {
     }
   }
 }
+
+}; // namespace Canonne
