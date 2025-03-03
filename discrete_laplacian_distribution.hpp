@@ -61,6 +61,8 @@ public:
     }
   };
 
+  // when creating a distribution for a DP application, note that
+  // $p = e^{-1/\epsillon}$
   explicit DiscreteLaplacian(double p) : _M_param(p) {}
   DiscreteLaplacian(const param_type &param) : _M_param(param) {}
 
