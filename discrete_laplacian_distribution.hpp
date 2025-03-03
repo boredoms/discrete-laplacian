@@ -21,17 +21,16 @@ template <typename IntType = int> class DiscreteLaplacian {
   // approach and continuous coin flips, but rather a single sample from the
   // uniform distribution. once p becomes large, this provides significant
   // speedups. See Knuth's AOCP Vol. 2 Section 3.4.1 Algorithm F
-  //
-  // TODO: make this parametric over different float types
   template <std::uniform_random_bit_generator URNG>
   IntType fast_geometric_distribution(URNG &urng, const double p) {
     std::exponential_distribution<> ed(1);
 
-    double u = 0.0;
+    double u;
 
-    while (u == 0.0) {
-      u = std::generate_canonical<double, 53>(urng);
-    }
+    do {
+      u = std::generate_canonical<double, std::numeric_limits<double>::digits>(
+          urng);
+    } while (u == 0.0);
 
     return static_cast<IntType>(std::ceil(std::log(u) / std::log(1 - p)));
   }
