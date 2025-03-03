@@ -40,18 +40,13 @@ TEST_CASE("Sample variance matches expected variance", "[DiscreteLaplacian]") {
 
   // how many samples are to be taken
   int num_samples = 1000000;
+  int num_stddevs = 4;
 
   // set up the random generators
   DiscreteLaplacian<int> dld(p);
-  auto buffer = generate_testing_data(dld, num_samples);
-  auto sample_variance = calculate_sample_variance(buffer);
 
-  // the limit stddev is the standard deviation of the random variable which
-  // outputs the sample variance of our sample. this is 2 * sigma^4 / (n-1) for
-  // the normal distribution that we converge towards by the central limit
-  // theorem
-  auto limit_stddev = std::sqrt(2 * dld.var() * dld.var() / (num_samples - 1));
-  auto margin = 4 * limit_stddev;
+  auto [sample_variance, margin] =
+      compute_variance_test_values(dld, num_samples, num_stddevs);
 
   REQUIRE_THAT(sample_variance, Catch::Matchers::WithinAbs(dld.var(), margin));
 }
@@ -146,26 +141,18 @@ TEST_CASE("Sample mean matches expected mean", "[DiscreteGaussian]") {
 }
 
 // Same as the mean test but testing for the variance
-// TODO: refactor this
 TEST_CASE("Sample variance matches expected variance", "[DiscreteGaussian]") {
   // the values of sigma^2 to test with
   auto sigma_square = GENERATE(0.1, 0.5, 1, 2, 10);
 
   // how many samples are to be taken
   int num_samples = 1000000;
+  int num_stddevs = 4;
 
-  // set up the random generators
   DiscreteGaussian<int> dnd(sigma_square);
-  auto buffer = generate_testing_data(dnd, num_samples);
 
-  // the limit stddev is the standard deviation of the random variable which
-  // outputs the sample variance of our sample. this is 2 * sigma^4 / (n-1) for
-  // the normal distribution that we converge towards by the central limit
-  // theorem
-  auto limit_stddev = std::sqrt(2 * dnd.var() * dnd.var() / (num_samples - 1));
-  auto margin = 4 * limit_stddev;
-
-  auto sample_variance = calculate_sample_variance(buffer);
+  auto [sample_variance, margin] =
+      compute_variance_test_values(dnd, num_samples, num_stddevs);
 
   // as var is only an upper bound on the variance for different values of sigma
   // this is what we have to do

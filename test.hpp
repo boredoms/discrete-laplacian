@@ -1,3 +1,6 @@
+#ifndef _DL_TEST_H_
+#define _DL_TEST_H_
+
 #include <random>
 #include <utility>
 #include <vector>
@@ -69,6 +72,22 @@ auto compute_mean_test_values(Distribution &d, int num_samples,
   return std::make_pair(sample_mean, margin);
 }
 
+template <typename Distribution>
+auto compute_variance_test_values(Distribution &d, int num_samples,
+                                  int num_stddevs) {
+  auto buffer = generate_testing_data(d, num_samples);
+  auto sample_variance = calculate_sample_variance(buffer);
+
+  // the limit stddev is the standard deviation of the random variable which
+  // outputs the sample variance of our sample. this is 2 * sigma^4 / (n-1) for
+  // the normal distribution that we converge towards by the central limit
+  // theorem
+  auto limit_stddev = std::sqrt(2 * d.var() * d.var() / (num_samples - 1));
+  auto margin = 4 * limit_stddev;
+
+  return std::make_pair(sample_variance, margin);
+}
+
 // compute the chi-squared test statistic of sum((observed - expected)^2 /
 // expected), which is used in the chi-square test to check if all buckets
 // contain the expected number of elements
@@ -106,3 +125,5 @@ double compute_ks_statistic(const Distribution &dld,
 
   return ks;
 }
+
+#endif
