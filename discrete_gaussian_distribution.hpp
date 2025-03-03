@@ -39,7 +39,7 @@ public:
     }
   };
 
-  explicit DiscreteGaussian(double mu, double sigma) : _M_param(mu, sigma) {}
+  explicit DiscreteGaussian(double sigma) : _M_param(sigma) {}
   DiscreteGaussian(const param_type &param) : _M_param(param) {}
 
   void reset() {}
@@ -96,7 +96,7 @@ public:
   // applications, but if the behavior of an algorithm that depends on this
   // function is not as expected, it might warrant investigation if the
   // approxmation is sufficiently accurate.
-  double pmf(IntType k) {
+  double pmf(IntType k) const {
     auto p = std::exp(-(k * k) / (2 * _M_param.sigma_square()));
 
     // this is an approximate normalization constant, which gives a rather tight
