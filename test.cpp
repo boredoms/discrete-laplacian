@@ -7,16 +7,10 @@
 #include <random>
 #include <vector>
 
+#include "test.hpp"
+
+#include "discrete_gaussian_distribution.hpp"
 #include "discrete_laplacian_distribution.hpp"
-
-// helper function to generate num_samples samples from the DiscreteLaplacian
-std::vector<int> generate_samples(DiscreteLaplacian<int> &dld,
-                                  std::minstd_rand &gen, int num_samples) {
-  std::vector<int> buffer(num_samples);
-  std::generate(buffer.begin(), buffer.end(), [&]() { return dld(gen); });
-
-  return buffer;
-}
 
 // helper function to calculate the sample mean
 double calculate_sample_mean(const std::vector<int> &samples) {
@@ -45,22 +39,6 @@ std::vector<int> compute_counts(const std::vector<int> &buffer, int margin) {
   }
 
   return counts;
-}
-
-// compute the chi-squared test statistic of sum((observed - expected)^2 /
-// expected), which is used in the chi-square test to check if all buckets
-// contain the expected number of elements
-double compute_chi_square(const DiscreteLaplacian<int> &dld,
-                          const std::vector<int> &counts, int num_samples,
-                          int margin) {
-  double chi_2 = 0;
-  for (auto i = -margin; i <= margin; i++) {
-    auto expected = dld.pmf(i) * num_samples;
-
-    chi_2 += std::pow(counts[i + margin] - expected, 2) / expected;
-  }
-
-  return chi_2;
 }
 
 // compute the Kolmogorov-Smirnov statistic, which is similar to an extended
@@ -130,7 +108,7 @@ TEST_CASE("Sample variance matches expected variance", "[DiscreteLaplacian]") {
   std::random_device rd;
   std::minstd_rand gen(rd());
 
-  DiscreteLaplacian<int> dld(0.5);
+  DiscreteLaplacian<int> dld(p);
 
   // the limit stddev is the standard deviation of the random variable which
   // outputs the sample variance of our sample. this is 2 * sigma^4 / (n-1) for
@@ -160,7 +138,7 @@ TEST_CASE("Empirical frequency matches expected frequency",
   std::random_device rd;
   std::minstd_rand gen(rd());
 
-  DiscreteLaplacian<int> dld(0.5);
+  DiscreteLaplacian<int> dld(p);
 
   // here we compute the test margin, we want to check all buckets within 8
   // standard distributions, this value is chosen arbitrarily but it covers most
@@ -201,7 +179,7 @@ TEST_CASE("Empirical distribution matches expected distribution",
   std::random_device rd;
   std::minstd_rand gen(rd());
 
-  DiscreteLaplacian<int> dld(0.5);
+  DiscreteLaplacian<int> dld(p);
 
   // here we compute the test margin, we want to check all buckets within 8
   // standard distributions
@@ -222,4 +200,99 @@ TEST_CASE("Empirical distribution matches expected distribution",
   // the numbers are from Knuth's AOCP Vol 2, and they should have the test
   // fail no more than 2% of the time
   REQUIRE((0.07089 < ks && ks < 1.5174));
+}
+
+// same as the mean test for the discrete Laplacian, but for the discrete
+// Gaussian
+TEST_CASE("Sample mean matches expected mean", "[DiscreteGaussian]") {
+  // the values of sigma^2 to test with
+  auto sigma_square = GENERATE(0.1, 0.5, 1, 2, 10);
+
+  // how many samples are to be taken
+  int num_samples = 1000000;
+
+  // set up the random generators and the distribution
+  std::random_device rd;
+  std::minstd_rand gen(rd());
+
+  DiscreteGaussian<int> dnd(sigma_square);
+
+  // here we compute the important parameters for the test, by the CLT we expect
+  // the sample mean to be distributed as a normal distribution with mean 0 and
+  // variance sigma/sqrt(n)
+  auto mean = dnd.mean();
+  auto stddev = std::sqrt(dnd.var());
+  auto margin = 3 * stddev / std::sqrt(num_samples);
+
+  // fill the buffer with random integers drawn from DiscreteLaplacian
+  auto buffer = generate_samples(dnd, gen, num_samples);
+  auto sample_mean = calculate_sample_mean(buffer);
+
+  REQUIRE_THAT(sample_mean, Catch::Matchers::WithinAbs(mean, margin));
+}
+
+// Same as the mean test but testing for the variance
+// TODO: refactor this
+TEST_CASE("Sample variance matches expected variance", "[DiscreteGaussian]") {
+  // the values of sigma^2 to test with
+  auto sigma_square = GENERATE(0.1, 0.5, 1, 2, 10);
+
+  // how many samples are to be taken
+  int num_samples = 1000000;
+
+  // set up the random generators
+  std::random_device rd;
+  std::minstd_rand gen(rd());
+
+  DiscreteGaussian<int> dnd(sigma_square);
+
+  // the limit stddev is the standard deviation of the random variable which
+  // outputs the sample variance of our sample. this is 2 * sigma^4 / (n-1) for
+  // the normal distribution that we converge towards by the central limit
+  // theorem
+  auto limit_stddev = std::sqrt(2 * dnd.var() * dnd.var() / (num_samples - 1));
+  auto margin = 4 * limit_stddev;
+
+  auto buffer = generate_samples(dnd, gen, num_samples);
+  auto sample_variance = calculate_sample_variance(buffer);
+
+  REQUIRE_THAT(sample_variance, Catch::Matchers::WithinAbs(dnd.var(), margin));
+}
+
+TEST_CASE("Empirical frequency matches expected frequency",
+          "[DiscreteGaussian]") {
+  // the values of p to test with
+  auto sigma_square = GENERATE(0.1, 0.25, 0.5, 0.75, 0.9);
+
+  // how many samples are to be taken
+  int num_samples = 1000000;
+
+  // set up the random generators
+  std::random_device rd;
+  std::minstd_rand gen(rd());
+
+  DiscreteGaussian<int> dnd(sigma_square);
+
+  // here we compute the test margin, we want to check all buckets within 8
+  // standard distributions, this value is chosen arbitrarily but it covers most
+  // of the outputs
+  int stddev = std::ceil(std::sqrt(dnd.var()));
+  int margin = 8 * stddev;
+  int num_buckets = 2 * margin + 1;
+
+  auto buffer = generate_samples(dnd, gen, num_samples);
+  auto counts = compute_counts(buffer, margin);
+
+  // compute chi^2 statistic
+  // the mean and stddev are direct properties of the chi_square distribution
+  // with num_buckets degrees of freedom
+  double chi_2_mean = num_buckets - 1;
+  double chi_2_stddev = std::sqrt(2 * num_buckets - 2);
+
+  auto chi_2 = compute_chi_square(dnd, counts, num_samples, margin);
+
+  // here we make the assumption that the chi_2 distribution is sufficiently
+  // close to a normal distribution and therefore we can assume that the
+  // observed statistic is usually within three times the stddev
+  REQUIRE_THAT(chi_2, Catch::Matchers::WithinAbs(chi_2_mean, 3 * chi_2_stddev));
 }
