@@ -74,8 +74,8 @@ public:
   param_type param() const { return _M_param; }
 
   // these are defined by the integer type we use
-  result_type min() const { std::numeric_limits<IntType>::min(); }
-  result_type max() const { std::numeric_limits<IntType>::max(); }
+  result_type min() const { return std::numeric_limits<IntType>::min(); }
+  result_type max() const { return std::numeric_limits<IntType>::max(); }
 
   // the discrete gaussian is symmetric around 0
   result_type mean() const { return 0; }

@@ -52,7 +52,7 @@ public:
     double p() const { return _M_p; }
 
     friend bool operator==(const param_type &l, const param_type &r) {
-      l._M_p == r._M_p;
+      return l._M_p == r._M_p;
     }
 
     friend bool operator!=(const param_type &l, const param_type &r) {
@@ -82,8 +82,8 @@ public:
   param_type param() const { return _M_param; }
 
   // these are defined by the integer type we use
-  result_type min() const { std::numeric_limits<IntType>::min(); }
-  result_type max() const { std::numeric_limits<IntType>::max(); }
+  result_type min() const { return std::numeric_limits<IntType>::min(); }
+  result_type max() const { return std::numeric_limits<IntType>::max(); }
 
   // the mean (first moment) of the distribution is 0, c.f. Proposition 2.2. in
   // Inusah and Kozubowski
