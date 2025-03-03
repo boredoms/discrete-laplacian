@@ -9,6 +9,7 @@
 
 #include "test.hpp"
 
+#include "canonne.hpp"
 #include "discrete_gaussian_distribution.hpp"
 #include "discrete_laplacian_distribution.hpp"
 
@@ -269,6 +270,55 @@ TEST_CASE("Empirical frequency matches expected frequency",
   double chi_2_stddev = std::sqrt(2 * num_buckets - 2);
 
   auto chi_2 = compute_chi_square(dnd, counts, num_samples, margin);
+
+  // here we make the assumption that the chi_2 distribution is sufficiently
+  // close to a normal distribution and therefore we can assume that the
+  // observed statistic is usually within three times the stddev
+  REQUIRE_THAT(chi_2, Catch::Matchers::WithinAbs(chi_2_mean, 3 * chi_2_stddev));
+}
+
+// here we use a chi-squared test to test whether the empirical number of
+// samples is close to the expceted one for each integer within a margin around
+// the mean, we test canonne's discrete laplacian
+TEST_CASE("Empirical frequency matches expected frequency", "[Canonne]") {
+  // the values of p to test with
+  auto st = GENERATE(std::pair<int, int>(2, 5), std::pair<int, int>(3, 4),
+                     std::pair<int, int>(14, 10), std::pair<int, int>(35, 10),
+                     std::pair<int, int>(95, 10));
+  auto [s, t] = st;
+
+  double p = std::exp(-(static_cast<double>(s) / t));
+
+  // how many samples are to be taken
+  int num_samples = 1000000;
+
+  // set up the random generators
+  std::random_device rd;
+  std::minstd_rand gen(rd());
+
+  DiscreteLaplacian<int> dld(p);
+
+  // here we compute the test margin, we want to check all buckets within 8
+  // standard distributions, this value is chosen arbitrarily but it covers most
+  // of the outputs
+  int stddev = std::ceil(std::sqrt(dld.var()));
+  int margin = 8 * stddev;
+  int num_buckets = 2 * margin + 1;
+
+  auto buffer = std::vector<int>(num_samples);
+
+  std::generate(buffer.begin(), buffer.end(),
+                [&]() { return Canonne::discrete_laplace(gen, s, t); });
+
+  auto counts = compute_counts(buffer, margin);
+
+  // compute chi^2 statistic
+  // the mean and stddev are direct properties of the chi_square distribution
+  // with num_buckets degrees of freedom
+  double chi_2_mean = num_buckets - 1;
+  double chi_2_stddev = std::sqrt(2 * num_buckets - 2);
+
+  auto chi_2 = compute_chi_square(dld, counts, num_samples, margin);
 
   // here we make the assumption that the chi_2 distribution is sufficiently
   // close to a normal distribution and therefore we can assume that the
