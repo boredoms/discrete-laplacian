@@ -1,5 +1,6 @@
 #include <cassert>
 #include <cmath>
+#include <numbers>
 #include <random>
 #include <type_traits>
 
@@ -13,7 +14,6 @@ template <typename IntType = int> class DiscreteGaussian {
 public:
   using result_type = IntType;
 
-  // TODO: implement
   class param_type {
     double _M_sigma_square;
     double _M_sigma;
@@ -46,7 +46,6 @@ public:
     return (*this)(urng, _M_param);
   }
 
-  // TODO: implement
   template <std::uniform_random_bit_generator URNG>
   result_type operator()(URNG &urng, const param_type &param) {
     auto t = std::floor(param.sigma()) + 1;
@@ -74,6 +73,51 @@ public:
 
   // the discrete gaussian is symmetric around 0
   result_type mean() const { return 0; }
+
+  // the variance is not exactly sigma square for this distribution,
+  // but sigma square provides an upper bound that is very close
+  double var() const {
+    if (_M_param.sigma_square() > 1.0 / 3.0) {
+      return _M_param.sigma_square();
+    } else {
+      return 3 * std::exp(-1.0 / (2 * _M_param.sigma_square()));
+    }
+  }
+
+  // this function gives an **approximate** probability mass function for the
+  // discrete gaussian. it is approximate in the sense that we can not exactly
+  // compute the normalization term, so we use a lower bound that is fairly
+  // tight. therefore the probability mass values produced by this function
+  // slightly **overestimate** the probability of the number occuring. as the
+  // deviations are very small, this should not be an issue in real world
+  // applications, but if the behavior of an algorithm that depends on this
+  // function is not as expected, it might warrant investigation if the
+  // approxmation is sufficiently accurate.
+  double pmf(IntType k) {
+    auto p = std::exp(-(k * k) / (2 * _M_param.sigma_square()));
+
+    // this is an approximate normalization constant, which gives a rather tight
+    // **lower bound** on the constant
+    auto normalization =
+        std::max(std::sqrt(2 * std::numbers::pi_v<double>) * _M_param.sigma() *
+                     (1 + 2 * std::exp(-2.0 * std::numbers::pi_v<double> *
+                                       std::numbers::pi_v<double> *
+                                       _M_param.sigma_square())),
+                 1 + 2 * std::exp(-1.0 / (2 * _M_param.sigma_square())));
+
+    return p / normalization;
+  }
+
+  // NOTE: currently we don't implement a cumulative density function for the
+  // discrete gaussian, as there is no good closed form expression
+
+  friend bool operator==(const DiscreteGaussian &l, const DiscreteGaussian &r) {
+    return l._M_param == r._M_param;
+  }
+
+  friend bool operator!=(const DiscreteGaussian &l, const DiscreteGaussian &r) {
+    return !(l == r);
+  }
 
 private:
   param_type _M_param;
