@@ -195,7 +195,7 @@ TEST_CASE("Empirical distribution matches expected distribution",
 
   auto ks = compute_ks_statistic(dld, counts, num_samples, margin, seen);
 
-  printf("Kolmogorov-Smirnov: %f", ks);
+  printf("Kolmogorov-Smirnov: %f\n", ks);
 
   // the numbers are from Knuth's AOCP Vol 2, and they should have the test
   // fail no more than 2% of the time
@@ -256,7 +256,9 @@ TEST_CASE("Sample variance matches expected variance", "[DiscreteGaussian]") {
   auto buffer = generate_samples(dnd, gen, num_samples);
   auto sample_variance = calculate_sample_variance(buffer);
 
-  REQUIRE_THAT(sample_variance, Catch::Matchers::WithinAbs(dnd.var(), margin));
+  // as var is only an upper bound on the variance for different values of sigma
+  // this is what we have to do
+  REQUIRE(sample_variance < dnd.var() + margin);
 }
 
 TEST_CASE("Empirical frequency matches expected frequency",
