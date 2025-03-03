@@ -12,8 +12,34 @@
 #include "discrete_gaussian_distribution.hpp"
 #include "discrete_laplacian_distribution.hpp"
 
-// helper function to compute the chi_2 statistic
-//
+// helper function to calculate the sample mean
+double calculate_sample_mean(const std::vector<int> &samples) {
+  return static_cast<double>(
+             std::accumulate(samples.begin(), samples.end(), 0)) /
+         samples.size();
+}
+
+// helper function to compute the sample variance
+double calculate_sample_variance(const std::vector<int> &samples) {
+  return static_cast<double>(std::transform_reduce(
+             samples.begin(), samples.end(), 0, std::plus<>(),
+             [](double x) { return x * x; })) /
+         (samples.size() - 1);
+}
+
+// helper function to compute the counts for elements within a margin from the
+// mean, which is 0
+std::vector<int> compute_counts(const std::vector<int> &buffer, int margin) {
+  std::vector<int> counts(2 * margin + 1);
+
+  for (auto n : buffer) {
+    if (std::abs(n) <= margin) {
+      counts[n + margin]++;
+    }
+  }
+
+  return counts;
+}
 
 // Here we test whether the mean matches what we would expect
 // Since we are summing over random variables, we can make use of the
