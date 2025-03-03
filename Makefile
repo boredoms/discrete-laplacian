@@ -1,5 +1,5 @@
 CXX = g++
-CXXFLAGS = -std=c++20
+CXXFLAGS = -std=c++20 -Wall -Wpedantic
 INCLUDES = -I/opt/homebrew/include/
 LDFLAGS = -L/opt/homebrew/lib/ 
 LDLIBS = -lCatch2 -lCatch2Main
