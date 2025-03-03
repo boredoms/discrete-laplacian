@@ -2,8 +2,6 @@
 #include <catch2/catch_all.hpp>
 #include <cmath>
 #include <cstdio>
-#include <functional>
-#include <numeric>
 #include <random>
 #include <vector>
 
@@ -12,35 +10,6 @@
 #include "canonne.hpp"
 #include "discrete_gaussian_distribution.hpp"
 #include "discrete_laplacian_distribution.hpp"
-
-// helper function to calculate the sample mean
-double calculate_sample_mean(const std::vector<int> &samples) {
-  return static_cast<double>(
-             std::accumulate(samples.begin(), samples.end(), 0)) /
-         samples.size();
-}
-
-// helper function to compute the sample variance
-double calculate_sample_variance(const std::vector<int> &samples) {
-  return static_cast<double>(std::transform_reduce(
-             samples.begin(), samples.end(), 0, std::plus<>(),
-             [](double x) { return x * x; })) /
-         (samples.size() - 1);
-}
-
-// helper function to compute the counts for elements within a margin from the
-// mean, which is 0
-std::vector<int> compute_counts(const std::vector<int> &buffer, int margin) {
-  std::vector<int> counts(2 * margin + 1);
-
-  for (auto n : buffer) {
-    if (std::abs(n) <= margin) {
-      counts[n + margin]++;
-    }
-  }
-
-  return counts;
-}
 
 // Here we test whether the mean matches what we would expect
 // Since we are summing over random variables, we can make use of the
@@ -53,25 +22,15 @@ TEST_CASE("Sample mean matches expected mean", "[DiscreteLaplacian]") {
 
   // how many samples are to be taken
   int num_samples = 1000000;
+  int num_stddevs = 3;
 
-  // set up the random generators and the distribution
-  std::random_device rd;
-  std::minstd_rand gen(rd());
-
+  // set up the distribution
   DiscreteLaplacian<int> dld(p);
 
-  // here we compute the important parameters for the test, by the CLT we expect
-  // the sample mean to be distributed as a normal distribution with mean 0 and
-  // variance sigma/sqrt(n)
-  auto mean = dld.mean();
-  auto stddev = std::sqrt(dld.var());
-  auto margin = 3 * stddev / std::sqrt(num_samples);
+  auto [sample_mean, margin] =
+      compute_mean_test_values(dld, num_samples, num_stddevs);
 
-  // fill the buffer with random integers drawn from DiscreteLaplacian
-  auto buffer = generate_samples(dld, gen, num_samples);
-  auto sample_mean = calculate_sample_mean(buffer);
-
-  REQUIRE_THAT(sample_mean, Catch::Matchers::WithinAbs(mean, margin));
+  REQUIRE_THAT(sample_mean, Catch::Matchers::WithinAbs(dld.mean(), margin));
 }
 
 // Same as the mean test but testing for the variance
@@ -83,10 +42,9 @@ TEST_CASE("Sample variance matches expected variance", "[DiscreteLaplacian]") {
   int num_samples = 1000000;
 
   // set up the random generators
-  std::random_device rd;
-  std::minstd_rand gen(rd());
-
   DiscreteLaplacian<int> dld(p);
+  auto buffer = generate_testing_data(dld, num_samples);
+  auto sample_variance = calculate_sample_variance(buffer);
 
   // the limit stddev is the standard deviation of the random variable which
   // outputs the sample variance of our sample. this is 2 * sigma^4 / (n-1) for
@@ -94,9 +52,6 @@ TEST_CASE("Sample variance matches expected variance", "[DiscreteLaplacian]") {
   // theorem
   auto limit_stddev = std::sqrt(2 * dld.var() * dld.var() / (num_samples - 1));
   auto margin = 4 * limit_stddev;
-
-  auto buffer = generate_samples(dld, gen, num_samples);
-  auto sample_variance = calculate_sample_variance(buffer);
 
   REQUIRE_THAT(sample_variance, Catch::Matchers::WithinAbs(dld.var(), margin));
 }
@@ -111,12 +66,9 @@ TEST_CASE("Empirical frequency matches expected frequency",
 
   // how many samples are to be taken
   int num_samples = 1000000;
-
-  // set up the random generators
-  std::random_device rd;
-  std::minstd_rand gen(rd());
-
   DiscreteLaplacian<int> dld(p);
+
+  auto buffer = generate_testing_data(dld, num_samples);
 
   // here we compute the test margin, we want to check all buckets within 8
   // standard distributions, this value is chosen arbitrarily but it covers most
@@ -125,7 +77,6 @@ TEST_CASE("Empirical frequency matches expected frequency",
   int margin = 8 * stddev;
   int num_buckets = 2 * margin + 1;
 
-  auto buffer = generate_samples(dld, gen, num_samples);
   auto counts = compute_counts(buffer, margin);
 
   // compute chi^2 statistic
@@ -152,20 +103,15 @@ TEST_CASE("Empirical distribution matches expected distribution",
 
   // how many samples are to be taken
   int num_samples = 1000000;
-
-  // set up the random generators
-  std::random_device rd;
-  std::minstd_rand gen(rd());
-
   DiscreteLaplacian<int> dld(p);
+
+  auto buffer = generate_testing_data(dld, num_samples);
 
   // here we compute the test margin, we want to check all buckets within 8
   // standard distributions
   int stddev = std::ceil(std::sqrt(dld.var()));
   int margin = 8 * stddev;
   int num_buckets = 2 * margin + 1;
-
-  auto buffer = generate_samples(dld, gen, num_samples);
 
   auto counts = compute_counts(buffer, margin);
   int seen = std::count_if(buffer.begin(), buffer.end(),
@@ -188,25 +134,15 @@ TEST_CASE("Sample mean matches expected mean", "[DiscreteGaussian]") {
 
   // how many samples are to be taken
   int num_samples = 1000000;
+  int num_stddevs = 3;
 
-  // set up the random generators and the distribution
-  std::random_device rd;
-  std::minstd_rand gen(rd());
-
+  // set up the random distribution
   DiscreteGaussian<int> dnd(sigma_square);
 
-  // here we compute the important parameters for the test, by the CLT we expect
-  // the sample mean to be distributed as a normal distribution with mean 0 and
-  // variance sigma/sqrt(n)
-  auto mean = dnd.mean();
-  auto stddev = std::sqrt(dnd.var());
-  auto margin = 3 * stddev / std::sqrt(num_samples);
+  auto [sample_mean, margin] =
+      compute_mean_test_values(dnd, num_samples, num_stddevs);
 
-  // fill the buffer with random integers drawn from DiscreteLaplacian
-  auto buffer = generate_samples(dnd, gen, num_samples);
-  auto sample_mean = calculate_sample_mean(buffer);
-
-  REQUIRE_THAT(sample_mean, Catch::Matchers::WithinAbs(mean, margin));
+  REQUIRE_THAT(sample_mean, Catch::Matchers::WithinAbs(dnd.mean(), margin));
 }
 
 // Same as the mean test but testing for the variance
@@ -219,10 +155,8 @@ TEST_CASE("Sample variance matches expected variance", "[DiscreteGaussian]") {
   int num_samples = 1000000;
 
   // set up the random generators
-  std::random_device rd;
-  std::minstd_rand gen(rd());
-
   DiscreteGaussian<int> dnd(sigma_square);
+  auto buffer = generate_testing_data(dnd, num_samples);
 
   // the limit stddev is the standard deviation of the random variable which
   // outputs the sample variance of our sample. this is 2 * sigma^4 / (n-1) for
@@ -231,7 +165,6 @@ TEST_CASE("Sample variance matches expected variance", "[DiscreteGaussian]") {
   auto limit_stddev = std::sqrt(2 * dnd.var() * dnd.var() / (num_samples - 1));
   auto margin = 4 * limit_stddev;
 
-  auto buffer = generate_samples(dnd, gen, num_samples);
   auto sample_variance = calculate_sample_variance(buffer);
 
   // as var is only an upper bound on the variance for different values of sigma
@@ -248,10 +181,8 @@ TEST_CASE("Empirical frequency matches expected frequency",
   int num_samples = 1000000;
 
   // set up the random generators
-  std::random_device rd;
-  std::minstd_rand gen(rd());
-
   DiscreteGaussian<int> dnd(sigma_square);
+  auto buffer = generate_testing_data(dnd, num_samples);
 
   // here we compute the test margin, we want to check all buckets within 8
   // standard distributions, this value is chosen arbitrarily but it covers most
@@ -260,7 +191,6 @@ TEST_CASE("Empirical frequency matches expected frequency",
   int margin = 8 * stddev;
   int num_buckets = 2 * margin + 1;
 
-  auto buffer = generate_samples(dnd, gen, num_samples);
   auto counts = compute_counts(buffer, margin);
 
   // compute chi^2 statistic
@@ -287,6 +217,8 @@ TEST_CASE("Empirical frequency matches expected frequency", "[Canonne]") {
                      std::pair<int, int>(95, 10));
   auto [s, t] = st;
 
+  // compute the equivalent p so we can use DiscreteLaplacian for double
+  // checking
   double p = std::exp(-(static_cast<double>(s) / t));
 
   // how many samples are to be taken

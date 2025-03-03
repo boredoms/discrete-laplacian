@@ -1,4 +1,5 @@
 #include <random>
+#include <utility>
 #include <vector>
 
 // this file defines some template functions used in the tests
@@ -6,12 +7,66 @@
 // helper function to generate num_samples samples from a distribution
 
 template <typename Distribution>
-std::vector<int> generate_samples(Distribution &dld, std::minstd_rand &gen,
+std::vector<int> generate_samples(Distribution &d, std::minstd_rand &gen,
                                   int num_samples) {
   std::vector<int> buffer(num_samples);
-  std::generate(buffer.begin(), buffer.end(), [&]() { return dld(gen); });
+  std::generate(buffer.begin(), buffer.end(), [&]() { return d(gen); });
 
   return buffer;
+}
+
+template <typename Distribution>
+auto generate_testing_data(Distribution &d, int num_samples) {
+std:;
+  std::random_device rd;
+  std::minstd_rand gen(rd());
+
+  return generate_samples(d, gen, num_samples);
+}
+
+// helper function to calculate the sample mean
+inline double calculate_sample_mean(const std::vector<int> &samples) {
+  return static_cast<double>(
+             std::accumulate(samples.begin(), samples.end(), 0)) /
+         samples.size();
+}
+
+// helper function to compute the sample variance
+inline double calculate_sample_variance(const std::vector<int> &samples) {
+  return static_cast<double>(std::transform_reduce(
+             samples.begin(), samples.end(), 0, std::plus<>(),
+             [](double x) { return x * x; })) /
+         (samples.size() - 1);
+}
+
+// helper function to compute the counts for elements within a margin from the
+// mean, which is 0
+inline std::vector<int> compute_counts(const std::vector<int> &buffer,
+                                       int margin) {
+  std::vector<int> counts(2 * margin + 1);
+
+  for (auto n : buffer) {
+    if (std::abs(n) <= margin) {
+      counts[n + margin]++;
+    }
+  }
+
+  return counts;
+}
+
+template <typename Distribution>
+auto compute_mean_test_values(Distribution &d, int num_samples,
+                              int num_stddevs) {
+  auto buffer = generate_testing_data(d, num_samples);
+  auto sample_mean = calculate_sample_mean(buffer);
+
+  // here we compute the important parameters for the test, by the CLT we expect
+  // the sample mean to be distributed as a normal distribution with mean 0 and
+  // variance sigma/sqrt(n)
+  auto stddev = std::sqrt(d.var());
+  auto margin = num_stddevs * stddev / std::sqrt(num_samples);
+
+  return std::make_pair(sample_mean, margin);
 }
 
 // compute the chi-squared test statistic of sum((observed - expected)^2 /
