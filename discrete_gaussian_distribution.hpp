@@ -3,7 +3,9 @@
 
 #include <cassert>
 #include <cmath>
+#include <istream>
 #include <numbers>
+#include <ostream>
 #include <random>
 #include <type_traits>
 
@@ -126,5 +128,44 @@ public:
 private:
   param_type _M_param;
 };
+
+template <class CharT, class Traits, class IntegerType>
+std::basic_ostream<CharT, Traits> &
+operator<<(std::basic_ostream<CharT, Traits> &os,
+           const DiscreteGaussian<IntegerType> &dnd) {
+  std::basic_ostream<CharT, Traits> savestate(nullptr);
+  savestate.copyfmt(os);
+
+  using OS = std::basic_ostream<CharT, Traits>;
+
+  os.flags(OS::dec | OS::left | OS::fixed | OS::scientific);
+  os << dnd.sigma_square();
+
+  os.copyfmt(savestate);
+  return os;
+}
+
+template <class CharT, class Traits, class IntegerType>
+std::basic_istream<CharT, Traits> &
+operator>>(std::basic_istream<CharT, Traits> &is,
+           const DiscreteGaussian<IntegerType> &dnd) {
+  std::basic_istream<CharT, Traits> savestate(nullptr);
+  savestate.copyfmt(is);
+
+  using IS = std::basic_istream<CharT, Traits>;
+  using param_type = DiscreteGaussian<IntegerType>::param_type;
+
+  is.flags(IS::dec | IS::skipws);
+
+  double sigma_square;
+  is >> sigma_square;
+
+  if (!is.fail()) {
+    dnd.param(param_type(sigma_square));
+  }
+
+  is.copyfmt(savestate);
+  return is;
+}
 
 #endif

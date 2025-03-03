@@ -130,4 +130,43 @@ private:
   param_type _M_param;
 };
 
+template <class CharT, class Traits, class IntegerType>
+std::basic_ostream<CharT, Traits> &
+operator<<(std::basic_ostream<CharT, Traits> &os,
+           const DiscreteLaplacian<IntegerType> &dnd) {
+  std::basic_ostream<CharT, Traits> savestate(nullptr);
+  savestate.copyfmt(os);
+
+  using OS = std::basic_ostream<CharT, Traits>;
+
+  os.flags(OS::dec | OS::left | OS::fixed | OS::scientific);
+  os << dnd.p();
+
+  os.copyfmt(savestate);
+  return os;
+}
+
+template <class CharT, class Traits, class IntegerType>
+std::basic_istream<CharT, Traits> &
+operator>>(std::basic_istream<CharT, Traits> &is,
+           const DiscreteLaplacian<IntegerType> &dnd) {
+  std::basic_istream<CharT, Traits> savestate(nullptr);
+  savestate.copyfmt(is);
+
+  using IS = std::basic_istream<CharT, Traits>;
+  using param_type = DiscreteLaplacian<IntegerType>::param_type;
+
+  is.flags(IS::dec | IS::skipws);
+
+  double p;
+  is >> p;
+
+  if (!is.fail()) {
+    dnd.param(param_type(p));
+  }
+
+  is.copyfmt(savestate);
+  return is;
+}
+
 #endif // !DEBUG
