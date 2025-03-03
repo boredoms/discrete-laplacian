@@ -1,3 +1,6 @@
+#ifndef _DISCRETE_GAUSSIAN_H_
+#define _DISCRETE_GAUSSIAN_H_
+
 #include <cassert>
 #include <cmath>
 #include <numbers>
@@ -122,3 +125,5 @@ public:
 private:
   param_type _M_param;
 };
+
+#endif
