@@ -52,14 +52,15 @@ public:
   template <std::uniform_random_bit_generator URNG>
   result_type operator()(URNG &urng, const param_type &param) {
     auto t = std::floor(param.sigma()) + 1;
+    auto p = std::exp(-1.0 / t);
 
     while (1) {
       // sample discrete laplacian
-      auto y = DiscreteLaplacian<>(t)(urng);
+      auto y = DiscreteLaplacian<>(p)(urng);
       // sample bernoulli
-      auto p = std::exp(-std::pow(std::abs(y) - param.sigma_square() / t, 2) /
+      auto q = std::exp(-std::pow(std::abs(y) - param.sigma_square() / t, 2) /
                         (2 * param.sigma_square()));
-      auto c = std::bernoulli_distribution(p)(urng);
+      auto c = std::bernoulli_distribution(q)(urng);
 
       if (c == 1) {
         return y;
