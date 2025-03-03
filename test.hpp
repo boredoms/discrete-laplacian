@@ -2,6 +2,7 @@
 #define _DL_TEST_H_
 
 #include <random>
+#include <tuple>
 #include <utility>
 #include <vector>
 
@@ -103,6 +104,38 @@ double compute_chi_square(const Distribution &dld,
   }
 
   return chi_2;
+}
+
+inline double chi_square_mean(int degrees_of_freedom) {
+  return degrees_of_freedom - 1;
+}
+
+inline double chi_square_stddev(int degrees_of_freedom) {
+  return std::sqrt(2 * static_cast<double>(degrees_of_freedom) - 2);
+}
+
+template <typename Distribution>
+auto compute_chi_test_values(Distribution &d, int num_samples) {
+  auto buffer = generate_testing_data(d, num_samples);
+
+  // here we compute the test margin, we want to check all buckets within 8
+  // standard distributions, this value is chosen arbitrarily but it covers most
+  // of the outputs
+  int stddev = std::ceil(std::sqrt(d.var()));
+  int margin = 8 * stddev;
+  int num_buckets = 2 * margin + 1;
+
+  auto counts = compute_counts(buffer, margin);
+
+  // compute chi^2 statistic
+  auto chi_2 = compute_chi_square(d, counts, num_samples, margin);
+
+  // the mean and stddev are direct properties of the chi_square distribution
+  // with num_buckets degrees of freedom
+  double chi_2_mean = chi_square_mean(num_buckets);
+  double chi_2_stddev = chi_square_stddev(num_buckets);
+
+  return std::make_tuple(chi_2, chi_2_mean, chi_2_stddev);
 }
 
 // compute the Kolmogorov-Smirnov statistic, which is similar to an extended
