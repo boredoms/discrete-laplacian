@@ -1,8 +1,13 @@
 CXX = g++
 CXXFLAGS = -std=c++20 -Wall -Wpedantic
+
+# the homebrew includes are for Mac OS users, you can remove them if you're compiling the tests on Linux
 INCLUDES = -I/opt/homebrew/include/ -Iinclude
+
 LDFLAGS = -L/opt/homebrew/lib/ 
 LDLIBS = -lCatch2 -lCatch2Main
+
+.PHONY: all test bench clean
 
 all: test bench
 
