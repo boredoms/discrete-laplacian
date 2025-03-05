@@ -9,7 +9,7 @@
 #include <random>
 #include <type_traits>
 
-#include "include/discrete_distributions/discrete_laplacian_distribution.hpp"
+#include "discrete_laplacian_distribution.hpp"
 
 template <typename IntType = int> class DiscreteGaussian {
   static_assert(std::is_integral<IntType>::value &&

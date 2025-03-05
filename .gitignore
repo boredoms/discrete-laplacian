@@ -30,8 +30,9 @@
 *.exe
 *.out
 *.app
-test
-bench
 
 # clangd cache
 .cache
+
+# build directory
+build

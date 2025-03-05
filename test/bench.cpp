@@ -2,8 +2,7 @@
 #include <iostream>
 #include <random>
 
-#include "canonne.hpp"
-#include "discrete_laplacian_distribution.hpp"
+#include "discrete_distributions/ddlib.hpp"
 
 TEST_CASE("Discrete Laplacian", "[DiscreteLaplacian]") {
   // set up test parameters

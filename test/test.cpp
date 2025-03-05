@@ -3,13 +3,10 @@
 #include <cmath>
 #include <cstdio>
 #include <random>
-#include <vector>
 
 #include "test.hpp"
 
-#include "canonne.hpp"
-#include "discrete_gaussian_distribution.hpp"
-#include "discrete_laplacian_distribution.hpp"
+#include "discrete_distributions/ddlib.hpp"
 
 // Here we test whether the mean matches what we would expect
 // Since we are summing over random variables, we can make use of the

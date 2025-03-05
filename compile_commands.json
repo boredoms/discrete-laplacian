@@ -1,7 +1,12 @@
 [
   {
     "directory": "/Users/remilia/files/personal/coding/discrete-laplacian-distribution",
-    "command": "g++ test.cpp -L/opt/homebrew/lib/ -I/opt/homebrew/include/ -std=c++20 -lCatch2 -lCatch2Main -o test",
-    "file": "test.cpp",
-  }
+    "command": "g++ test/test.cpp -L/opt/homebrew/lib/ -I/opt/homebrew/include/ -Iinclude -std=c++20 -lCatch2 -lCatch2Main -o test",
+    "file": "test/test.cpp",
+  },
+  {
+    "directory": "/Users/remilia/files/personal/coding/discrete-laplacian-distribution",
+    "command": "g++ test/bench.cpp -L/opt/homebrew/lib/ -I/opt/homebrew/include/ -Iinclude -std=c++20 -lCatch2 -lCatch2Main -o bench",
+    "file": "test/bench.cpp",
+  },
 ]

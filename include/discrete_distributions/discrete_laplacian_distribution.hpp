@@ -13,6 +13,9 @@ template <typename IntType = int> class DiscreteLaplacian {
                     std::is_signed<IntType>::value,
                 "template type must be a signed integral type");
 
+  // TODO: writing out and in, this makes it conformant with the
+  // RandomNumberDistribution STL trait
+
   // this function produces a geometrically distributed variable more quickly
   // than the standard library function, since it does not use an iterative
   // approach and continuous coin flips, but rather a single sample from the

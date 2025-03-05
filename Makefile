@@ -1,16 +1,16 @@
 CXX = g++
 CXXFLAGS = -std=c++20 -Wall -Wpedantic
-INCLUDES = -I/opt/homebrew/include/
+INCLUDES = -I/opt/homebrew/include/ -Iinclude
 LDFLAGS = -L/opt/homebrew/lib/ 
 LDLIBS = -lCatch2 -lCatch2Main
 
 all: test bench
 
-test: test.cpp $(wildcard *.hpp)
-	$(CXX) $(CXXFLAGS) $(INCLUDES) test.cpp -o test $(LDFLAGS) $(LDLIBS)
+test: test/test.cpp test/test.hpp include/discrete_distributions/$(wildcard *.hpp)
+	$(CXX) $(CXXFLAGS) $(INCLUDES) test/test.cpp -o build/test $(LDFLAGS) $(LDLIBS)
 
-bench: bench.cpp discrete_laplacian_distribution.hpp canonne.hpp
-	$(CXX) $(CXXFLAGS) $(INCLUDES) bench.cpp -O3 -o bench $(LDFLAGS) $(LDLIBS)
+bench: test/bench.cpp include/discrete_distributions/$(wildcard *.hpp)
+	$(CXX) $(CXXFLAGS) $(INCLUDES) test/bench.cpp -O3 -o build/bench $(LDFLAGS) $(LDLIBS)
 
 clean:
-	rm test bench
+	rm build/*
